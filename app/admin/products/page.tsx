@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import {redirect} from 'next/navigation'
 import ProductsPagination from "@/components/products/ProductsPagination";
 import ProductTable from "@/components/products/ProductsTable";
 import Heading from "@/components/ui/Heading";
@@ -12,62 +12,59 @@ async function productCount() {
 
 async function getProducts(page: number, pageSize: number) {
     const skip = (page - 1) * pageSize
-    return await prisma.product.findMany({
+    const products = await prisma.product.findMany({
         take: pageSize,
         skip, 
-        include: { category: true }
+        include: {
+            category: true
+        }
     })
+    return products
 }
 
-type SearchParams = {
-    page?: string;
-    query?: string;  // Si usas búsqueda
-}
+export type ProductsWithCategory = Awaited<ReturnType<typeof getProducts>>
 
-export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function ProductsPage({searchParams}: {searchParams: Record<string, string | string[] | undefined>}) {
+    const rawPage = Array.isArray(searchParams.page) ? searchParams.page[0] : searchParams.page;
+    const page = Number(rawPage) || 1;
+
     const pageSize = 10
-    const rawPage = searchParams?.page
-    const page = Number(rawPage) || 1
 
-    // Validación completa de la página
-    if (isNaN(page) || page < 1 || !Number.isInteger(page)) {
-        redirect('/admin/products?page=1')
-    }
+    if(page < 0) redirect('/admin/products')
 
-    const [products, totalProducts] = await Promise.all([
-        getProducts(page, pageSize),
-        productCount()
-    ])
+    const productsData = getProducts(page, pageSize)
+    const totalProductsData = productCount()
+
+    const [products, totalProducts] = await Promise.all([productsData, totalProductsData])
 
     const totalPages = Math.ceil(totalProducts / pageSize)
-
-    // Redirección si la página excede el máximo
-    if (page > totalPages && totalPages > 0) {
-        redirect(`/admin/products?page=${totalPages}`)
-    }
-
+    
+    if(page > totalPages) redirect('/admin/products')
+    
     return (
         <>
-            <Heading>Administrar Productos</Heading>
-            
-            <div className='flex flex-col gap-5 lg:flex-row justify-between'>
+            <Heading>
+                Administrar Productos
+            </Heading>
+
+            <div className=' flex flex-col gap-5 lg:flex-row justify-between'>
                 <Link 
-                    href='/admin/products/new'
-                    className='bg-amber-400 hover:bg-amber-500 transition-colors w-full lg:w-auto text-xl px-10 py-3 text-center font-bold'
-                >
-                    Crear Producto
-                </Link>
+                    href={'/admin/products/new'}
+                    className=' bg-amber-400 w-full lg:w-auto text-xl px-10 py-3 text-center font-bold '
+                >Crear Producto</Link>
                 <ProductSearchForm />
             </div>
 
-            <ProductTable products={products} />
 
-            {totalPages > 0 && (
-                <ProductsPagination 
-                    page={page}
-                    totalPages={totalPages}
-                />
-            )}
+            <ProductTable 
+                products={products}
+            />
+
+            <ProductsPagination 
+                page={page}
+                totalPages={totalPages}
+            />
+
         </>
     )
 }
