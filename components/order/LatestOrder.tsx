@@ -1,4 +1,3 @@
-import { products } from "@/prisma/data/product"
 import { OrderWithProducts } from "@/src/types"
 
 type LatestOrderProps = {
