@@ -28,7 +28,7 @@ type SearchParams = {
 
 export type ProductsWithCategory = Awaited<ReturnType<typeof getProducts>>
 
-export default async function ProductsPage({searchParams}: {searchParams: SearchParams}) {
+export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
     const page = Number(searchParams?.page) || 1
     const pageSize = 10
 
