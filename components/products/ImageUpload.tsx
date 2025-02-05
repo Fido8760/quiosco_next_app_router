@@ -12,7 +12,7 @@ export default function ImageUpload({image} : {image: string | undefined}) {
             onSuccess={(result, {widget}) => {
                 if(result.event === 'success') {
                     widget.close()
-                    //@ts-expect-error
+                    //@ts-expect-error: TypeScript no reconoce secure_url correctament
                     setImageUrl(result.info?.secure_url)
                 }
             }}
